@@ -6,6 +6,8 @@
 
 ## 自建(速度超快)
 https://github.com/linweiyuan/go-chatgpt-api
+### 1.打包： python setup.py sdist
+### 2.安装本地: pip install dist/{tar}
 
 ## ChatGPT使用时可能会遇到：
 
