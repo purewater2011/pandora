@@ -127,7 +127,8 @@ class ChatGPT(API):
         return self.access_token_key_list
 
     def list_models(self, raw=False, token=None):
-        url = '{}/api/models'.format(self.api_prefix)
+        # url = '{}/platform/v1/models'.format(self.api_prefix)
+        url = 'https://ai.fakeopen.com/api/models'
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
@@ -143,7 +144,7 @@ class ChatGPT(API):
         return result['models']
 
     def list_conversations(self, offset, limit, raw=False, token=None):
-        url = '{}/api/conversations?offset={}&limit={}'.format(self.api_prefix, offset, limit)
+        url = '{}/chatgpt/conversations?offset={}&limit={}'.format(self.api_prefix, offset, limit)
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
@@ -155,7 +156,7 @@ class ChatGPT(API):
         return resp.json()
 
     def get_conversation(self, conversation_id, raw=False, token=None):
-        url = '{}/api/conversation/{}'.format(self.api_prefix, conversation_id)
+        url = '{}/chatgpt/conversation/{}'.format(self.api_prefix, conversation_id)
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
@@ -171,7 +172,7 @@ class ChatGPT(API):
             'is_visible': False,
         }
 
-        url = '{}/api/conversations'.format(self.api_prefix)
+        url = '{}/chatgpt/conversations'.format(self.api_prefix)
         resp = self.session.patch(url=url, headers=self.__get_headers(token), json=data, **self.req_kwargs)
 
         if raw:
@@ -194,7 +195,7 @@ class ChatGPT(API):
         return self.__update_conversation(conversation_id, data, raw, token)
 
     def gen_conversation_title(self, conversation_id, model, message_id, raw=False, token=None):
-        url = '{}/api/conversation/gen_title/{}'.format(self.api_prefix, conversation_id)
+        url = '{}/chatgpt/conversation/gen_title/{}'.format(self.api_prefix, conversation_id)
         data = {
             'model': model,
             'message_id': message_id,
@@ -279,13 +280,13 @@ class ChatGPT(API):
         return self.__request_conversation(data, token)
 
     def __request_conversation(self, data, token=None):
-        url = '{}/api/conversation'.format(self.api_prefix)
+        url = '{}/chatgpt/conversation'.format(self.api_prefix)
         headers = {**self.session.headers, **self.__get_headers(token), 'Accept': 'text/event-stream'}
 
         return self._request_sse(url, headers, data)
 
     def __update_conversation(self, conversation_id, data, raw=False, token=None):
-        url = '{}/api/conversation/{}'.format(self.api_prefix, conversation_id)
+        url = '{}/chatgpt/conversation/{}'.format(self.api_prefix, conversation_id)
         resp = self.session.patch(url=url, headers=self.__get_headers(token), json=data, **self.req_kwargs)
 
         if raw:

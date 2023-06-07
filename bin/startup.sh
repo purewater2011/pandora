@@ -2,7 +2,8 @@
 
 PANDORA_ARGS=""
 PANDORA_COMMAND="pandora"
-USER_CONFIG_DIR="/data"
+USER_CONFIG_DIR="./data"
+CHATGPT_API_PREFIX="http://127.0.0.1:8080"
 
 if [ -n "${PANDORA_PROXY}" ]; then
   PANDORA_ARGS="${PANDORA_ARGS} -p ${PANDORA_PROXY}"
@@ -39,6 +40,8 @@ if [ -n "${PANDORA_CLOUD}" ]; then
 fi
 
 export USER_CONFIG_DIR
+export CHATGPT_API_PREFIX
 
 # shellcheck disable=SC2086
 $(command -v ${PANDORA_COMMAND}) ${PANDORA_ARGS}
+echo $(command -v ${PANDORA_COMMAND}) ${PANDORA_ARGS}
