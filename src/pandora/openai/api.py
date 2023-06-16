@@ -2,13 +2,18 @@
 
 import asyncio
 import json
+import os
 import queue as block_queue
 import threading
+import uuid
 from os import getenv
 
 import httpx
 import requests
 from certifi import where
+from openai import util
+
+from ..exts.config import USER_CONFIG_DIR
 
 from .. import __version__
 
@@ -103,13 +108,14 @@ class ChatGPT(API):
             } if proxy else None,
             'verify': where(),
             'timeout': 100,
+
             'allow_redirects': False,
         }
 
         self.user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) ' \
                           'Pandora/{} Safari/537.36'.format(__version__)
 
-        self.api_prefix = getenv('CHATGPT_API_PREFIX', 'https://ai.fakeopen.com')
+        self.api_prefix = getenv('CHATGPT_API_PREFIX', 'http://192.168.10.98:8080')
 
         super().__init__(proxy, self.req_kwargs['verify'])
 
@@ -245,6 +251,34 @@ class ChatGPT(API):
             data['conversation_id'] = conversation_id
 
         return self.__request_conversation(data, token)
+    def talkv2(self, messages, model, parent_message_id, conversation_id=None, stream=True, token=None):
+        new_messages = []
+        for msg in messages:
+            message_id = str(uuid.uuid4())
+            if msg['role'] == 'system':
+                continue
+            new_messages.append({
+                    'id': message_id,
+                    'role': msg['role'],
+                    'author': {
+                        'role': msg['role'],
+                    },
+                    'content': {
+                        'content_type': 'text',
+                        'parts': [msg['content']],
+                    },
+                })
+        data = {
+            'action': 'next',
+            'messages': new_messages,
+            'model': model,
+            'parent_message_id': parent_message_id,
+        }
+
+        if conversation_id:
+            data['conversation_id'] = conversation_id
+
+        return self.__request_conversation(data, token)
 
     def goon(self, model, parent_message_id, conversation_id, stream=True, token=None):
         data = {
@@ -308,7 +342,6 @@ class ChatGPT(API):
         except:
             return resp.text
 
-
 class ChatCompletion(API):
     def __init__(self, proxy=None):
         self.session = requests.Session()
@@ -356,3 +389,91 @@ class ChatCompletion(API):
             yield resp.json()
 
         return resp.status_code, resp.headers, __generate_wrap()
+
+
+# 基于actoken的Completion
+class ChatCompletionByGPT(ChatCompletion):
+    @staticmethod
+    def read_access_token(token_file):
+        with open(token_file, 'r') as f:
+            return f.read().strip()
+
+    def save_to_file(data, file):
+        if not isinstance(data, str):
+            data = json.dumps(data)
+        with open(file, 'w') as f:
+            f.write(data)
+
+    @classmethod
+    def create(cls,
+               messages=None,
+               model=None,
+               deployment_id=None,
+               conversation_id=None,
+               max_tokens=None,
+               temperature=None,
+               stream=False,
+               api_key=None,
+               *params
+               ):
+
+        token_file = os.path.join(USER_CONFIG_DIR, 'access_token.dat')
+        cache_file = os.path.join(USER_CONFIG_DIR, 'cache.dat')
+        ac_token = cls.read_access_token(token_file)
+
+        # 初始化
+        if os.path.isfile(cache_file):
+            t = cls.read_access_token(cache_file)
+            cache_data = json.loads(t) if t else ''
+            if 'conversation_id' in cache_data:
+                conversation_id = cache_data['conversation_id']
+            if not deployment_id and 'message_id' in cache_data:
+                deployment_id = cache_data['message_id']
+        if not deployment_id:
+            deployment_id = str(uuid.uuid4())
+
+        chatgpt = ChatGPT({'default': ac_token})
+        [status, headers, generator] = chatgpt.talkv2(messages, model, deployment_id, conversation_id, stream)
+
+        choices = []
+        c = 0
+        cache = ''
+
+        for line in generator:
+            if 'message' not in line:
+                result = {
+                    'error': generator['msg'] if 'msg' in generator else 'happened error',
+                    'detail': json.dumps(line)
+                }
+                # cls.save_to_file('{}', cache_file)
+                return result
+            deployment_id = line['message']['id']
+            cache = {'conversation_id': line['conversation_id'], 'message_id': deployment_id}
+            create_time = int(line['message']['create_time'])
+            choices.insert(0, {
+                'text': line['message']['content']['parts'][0],
+                'index': c,
+                'finish_reason':  line['message']['metadata']['finish_details']['type'] if 'finish_details' in line['message']['metadata'] else None
+            })
+            c = c + 1
+
+        cls.save_to_file(cache, cache_file)
+
+        result = {
+                  "id": deployment_id,
+                  "object": "text_completion",
+                  "created": create_time,
+                  "model": "text-davinci-003",
+                  "choices": choices,
+                  "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0
+                  }
+                }
+        result = util.convert_to_openai_object(result)
+        return result
+
+    @staticmethod
+    def get_user_config_dir():
+        return USER_CONFIG_DIR
