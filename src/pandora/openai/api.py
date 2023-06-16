@@ -452,6 +452,7 @@ class ChatCompletionByGPT(ChatCompletion):
             create_time = int(line['message']['create_time'])
             choices.insert(0, {
                 'text': line['message']['content']['parts'][0],
+                'message': {'content': line['message']['content']['parts'][0], 'role': 'assistant'},
                 'index': c,
                 'finish_reason':  line['message']['metadata']['finish_details']['type'] if 'finish_details' in line['message']['metadata'] else None
             })
@@ -461,7 +462,7 @@ class ChatCompletionByGPT(ChatCompletion):
 
         result = {
                   "id": deployment_id,
-                  "object": "text_completion",
+                  "object": "chat.completion",
                   "created": create_time,
                   "model": "text-davinci-003",
                   "choices": choices,
