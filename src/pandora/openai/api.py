@@ -256,7 +256,7 @@ class ChatGPT(API):
         for msg in messages:
             message_id = str(uuid.uuid4())
             if msg['role'] == 'system':
-                continue
+                msg['role'] = 'user'
             new_messages.append({
                     'id': message_id,
                     'role': msg['role'],
