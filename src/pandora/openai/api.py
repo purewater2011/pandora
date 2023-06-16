@@ -445,7 +445,7 @@ class ChatCompletionByGPT(ChatCompletion):
                     'error': generator['msg'] if 'msg' in generator else 'happened error',
                     'detail': json.dumps(line)
                 }
-                # cls.save_to_file('{}', cache_file)
+                cls.save_to_file('{}', cache_file)
                 return result
             deployment_id = line['message']['id']
             cache = {'conversation_id': line['conversation_id'], 'message_id': deployment_id}
