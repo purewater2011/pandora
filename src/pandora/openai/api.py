@@ -433,6 +433,7 @@ class ChatCompletionByGPT(ChatCompletion):
             deployment_id = str(uuid.uuid4())
 
         chatgpt = ChatGPT({'default': ac_token})
+        conversation_id = None # todo test
         [status, headers, generator] = chatgpt.talkv2(messages, 'text-davinci-002-render-sha', deployment_id, conversation_id, stream)
 
         choices = []
