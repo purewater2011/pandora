@@ -433,7 +433,7 @@ class ChatCompletionByGPT(ChatCompletion):
             deployment_id = str(uuid.uuid4())
 
         chatgpt = ChatGPT({'default': ac_token})
-        [status, headers, generator] = chatgpt.talkv2(messages, model, deployment_id, conversation_id, stream)
+        [status, headers, generator] = chatgpt.talkv2(messages, 'text-davinci-002-render-sha', deployment_id, conversation_id, stream)
 
         choices = []
         c = 0
@@ -464,7 +464,7 @@ class ChatCompletionByGPT(ChatCompletion):
                   "id": deployment_id,
                   "object": "chat.completion",
                   "created": create_time,
-                  "model": "text-davinci-003",
+                  "model": "text-davinci-002-render-sha",
                   "choices": choices,
                   "usage": {
                     "prompt_tokens": 0,
