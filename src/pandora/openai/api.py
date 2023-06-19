@@ -150,7 +150,7 @@ class ChatGPT(API):
         return result['models']
 
     def list_conversations(self, offset, limit, raw=False, token=None):
-        url = '{}/chatgpt/conversations?offset={}&limit={}'.format(self.api_prefix, offset, limit)
+        url = '{}/chatgpt/backend-api/conversations?offset={}&limit={}'.format(self.api_prefix, offset, limit)
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
@@ -178,7 +178,7 @@ class ChatGPT(API):
             'is_visible': False,
         }
 
-        url = '{}/chatgpt/conversations'.format(self.api_prefix)
+        url = '{}/chatgpt/backend-api/conversations'.format(self.api_prefix)
         resp = self.session.patch(url=url, headers=self.__get_headers(token), json=data, **self.req_kwargs)
 
         if raw:
