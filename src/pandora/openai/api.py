@@ -251,7 +251,7 @@ class ChatGPT(API):
             data['conversation_id'] = conversation_id
 
         return self.__request_conversation(data, token)
-    def talkv2(self, messages, model, parent_message_id, conversation_id=None, stream=True, token=None):
+    def talkv2(self, messages, model, parent_message_id, conversation_id=None, stream=True, token=None, auto_conversation=False):
         new_messages = []
         for msg in messages:
             message_id = str(uuid.uuid4())
@@ -268,8 +268,12 @@ class ChatGPT(API):
                         'parts': [msg['content']],
                     },
                 })
+        if auto_conversation:
+            action = 'variant'
+        else:
+            action = 'next'
         data = {
-            'action': 'next',
+            'action': action,
             'messages': new_messages,
             'model': model,
             'parent_message_id': parent_message_id,
@@ -414,6 +418,7 @@ class ChatCompletionByGPT(ChatCompletion):
                temperature=None,
                stream=False,
                api_key=None,
+               auto_conversation=False,
                **params
                ):
 
@@ -433,8 +438,9 @@ class ChatCompletionByGPT(ChatCompletion):
             deployment_id = str(uuid.uuid4())
 
         chatgpt = ChatGPT({'default': ac_token})
+        
         conversation_id = None # todo test
-        [status, headers, generator] = chatgpt.talkv2(messages, 'text-davinci-002-render-sha', deployment_id, conversation_id, stream)
+        [status, headers, generator] = chatgpt.talkv2(messages, 'text-davinci-002-render-sha', deployment_id, conversation_id, stream, auto_conversation=auto_conversation)
 
         choices = []
         c = 0
