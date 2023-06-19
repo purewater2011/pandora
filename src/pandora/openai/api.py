@@ -414,7 +414,7 @@ class ChatCompletionByGPT(ChatCompletion):
                temperature=None,
                stream=False,
                api_key=None,
-               *params
+               **params
                ):
 
         token_file = os.path.join(USER_CONFIG_DIR, 'access_token.dat')
