@@ -468,9 +468,9 @@ class ChatCompletionByGPT(ChatCompletion):
                   "model": "text-davinci-002-render-sha",
                   "choices": choices,
                   "usage": {
-                    "prompt_tokens": 0,
-                    "completion_tokens": 0,
-                    "total_tokens": 0
+                    "prompt_tokens": 1,
+                    "completion_tokens": 1,
+                    "total_tokens": 2
                   }
                 }
         result = util.convert_to_openai_object(result)
