@@ -2,21 +2,19 @@
 
 import asyncio
 import json
-import os
 import queue as block_queue
 import threading
-import uuid
 from os import getenv
 
 import httpx
 import requests
 from certifi import where
-from openai import util
-
-from ..exts.config import USER_CONFIG_DIR
 
 from .. import __version__
-
+from ..exts.config import default_api_prefix,USER_CONFIG_DIR
+import uuid
+from openai import util
+import os
 
 class API:
     def __init__(self, proxy, ca_bundle):
@@ -48,7 +46,7 @@ class API:
             if 'data: [DONE]' == utf8_line[0:12]:
                 break
 
-            if 'data: {' == utf8_line[0:7]:
+            if 'data: {"message":' == utf8_line[0:17]:
                 yield json.loads(utf8_line[6:])
 
     @staticmethod
@@ -108,14 +106,11 @@ class ChatGPT(API):
             } if proxy else None,
             'verify': where(),
             'timeout': 100,
-
             'allow_redirects': False,
         }
 
         self.user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) ' \
                           'Pandora/{} Safari/537.36'.format(__version__)
-
-        self.api_prefix = getenv('CHATGPT_API_PREFIX', 'http://192.168.10.98:8080')
 
         super().__init__(proxy, self.req_kwargs['verify'])
 
@@ -126,6 +121,10 @@ class ChatGPT(API):
             'Content-Type': 'application/json',
         }
 
+    @staticmethod
+    def __get_api_prefix():
+        return getenv('CHATGPT_API_PREFIX', default_api_prefix())
+
     def get_access_token(self, token_key=None):
         return self.access_tokens[token_key or self.default_token_key]
 
@@ -133,7 +132,7 @@ class ChatGPT(API):
         return self.access_token_key_list
 
     def list_models(self, raw=False, token=None):
-        # url = '{}/platform/v1/models'.format(self.api_prefix)
+        #url = '{}/api/models'.format(self.__get_api_prefix())
         url = 'https://ai.fakeopen.com/api/models'
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
@@ -150,7 +149,7 @@ class ChatGPT(API):
         return result['models']
 
     def list_conversations(self, offset, limit, raw=False, token=None):
-        url = '{}/chatgpt/backend-api/conversations?offset={}&limit={}'.format(self.api_prefix, offset, limit)
+        url = '{}/chatgpt/backend-api/conversations?offset={}&limit={}'.format(self.__get_api_prefix(), offset, limit)
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
@@ -162,7 +161,7 @@ class ChatGPT(API):
         return resp.json()
 
     def get_conversation(self, conversation_id, raw=False, token=None):
-        url = '{}/chatgpt/backend-api/conversation/{}'.format(self.api_prefix, conversation_id)
+        url = '{}/chatgpt/backend-api/conversation/{}'.format(self.__get_api_prefix(), conversation_id)
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
@@ -178,7 +177,7 @@ class ChatGPT(API):
             'is_visible': False,
         }
 
-        url = '{}/chatgpt/backend-api/conversations'.format(self.api_prefix)
+        url = '{}/chatgpt/backend-api/conversations'.format(self.__get_api_prefix())
         resp = self.session.patch(url=url, headers=self.__get_headers(token), json=data, **self.req_kwargs)
 
         if raw:
@@ -201,7 +200,7 @@ class ChatGPT(API):
         return self.__update_conversation(conversation_id, data, raw, token)
 
     def gen_conversation_title(self, conversation_id, model, message_id, raw=False, token=None):
-        url = '{}/chatgpt/backend-api/conversation/gen_title/{}'.format(self.api_prefix, conversation_id)
+        url = '{}/chatgpt/backend-api/conversation/gen_title/{}'.format(self.__get_api_prefix(), conversation_id)
         data = {
             'model': model,
             'message_id': message_id,
@@ -318,13 +317,13 @@ class ChatGPT(API):
         return self.__request_conversation(data, token)
 
     def __request_conversation(self, data, token=None):
-        url = '{}/chatgpt/backend-api/conversation'.format(self.api_prefix)
+        url = '{}/chatgpt/backend-api/conversation'.format(self.__get_api_prefix())
         headers = {**self.session.headers, **self.__get_headers(token), 'Accept': 'text/event-stream'}
 
         return self._request_sse(url, headers, data)
 
     def __update_conversation(self, conversation_id, data, raw=False, token=None):
-        url = '{}/chatgpt/backend-api/conversation/{}'.format(self.api_prefix, conversation_id)
+        url = '{}/chatgpt/backend-api/conversation/{}'.format(self.__get_api_prefix(), conversation_id)
         resp = self.session.patch(url=url, headers=self.__get_headers(token), json=data, **self.req_kwargs)
 
         if raw:
@@ -345,6 +344,7 @@ class ChatGPT(API):
             return str(resp.json()['detail'])
         except:
             return resp.text
+
 
 class ChatCompletion(API):
     def __init__(self, proxy=None):
@@ -381,7 +381,13 @@ class ChatCompletion(API):
         return self.__request_conversation(api_key, data, stream)
 
     def __request_conversation(self, api_key, data, stream):
-        url = '{}/v1/chat/completions'.format(getenv('OPENAI_API_PREFIX', 'https://api.openai.com'))
+        default = default_api_prefix()
+
+        if api_key.startswith('fk-') or api_key.startswith('pk-'):
+            prefix = default
+        else:
+            prefix = getenv('OPENAI_API_PREFIX', default)
+        url = '{}/v1/chat/completions'.format(prefix)
 
         if stream:
             headers = {**self.__get_headers(api_key), 'Accept': 'text/event-stream'}
