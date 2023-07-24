@@ -53,7 +53,7 @@ class Auth0:
     def __part_one(self) -> str:
         url = '{}/auth/preauth'.format(default_api_prefix())
         resp = self.session.get(url, allow_redirects=False, **self.req_kwargs)
-
+        print(resp)
         if resp.status_code == 200:
             json = resp.json()
             if 'preauth_cookie' not in json or not json['preauth_cookie']:
