@@ -3,11 +3,12 @@
 import datetime
 import re
 from datetime import datetime as dt
-from os import getenv
 from urllib.parse import urlparse, parse_qs
 
 import requests
 from certifi import where
+
+from ..exts.config import default_api_prefix
 
 
 class Auth0:
@@ -27,10 +28,10 @@ class Auth0:
             'timeout': 100,
         }
         self.access_token = None
+        self.refresh_token = None
         self.expires = None
         self.user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) ' \
                           'Chrome/109.0.0.0 Safari/537.36'
-        self.api_prefix = getenv('CHATGPT_API_PREFIX', 'https://ai.fakeopen.com')
 
     @staticmethod
     def __check_email(email: str):
@@ -44,9 +45,25 @@ class Auth0:
         if not self.__check_email(self.email) or not self.password:
             raise Exception('invalid email or password.')
 
-        return self.__part_two() if login_local else self.get_access_token_proxy()
+        return self.__part_one()
 
-    def __part_two(self) -> str:
+    def get_refresh_token(self):
+        return self.refresh_token
+
+    def __part_one(self) -> str:
+        url = '{}/auth/preauth'.format(default_api_prefix())
+        resp = self.session.get(url, allow_redirects=False, **self.req_kwargs)
+
+        if resp.status_code == 200:
+            json = resp.json()
+            if 'preauth_cookie' not in json or not json['preauth_cookie']:
+                raise Exception('Get preauth cookie failed.')
+
+            return self.__part_two(json['preauth_cookie'])
+        else:
+            raise Exception('Error request preauth.')
+
+    def __part_two(self, preauth: str) -> str:
         code_challenge = 'w6n3Ix420Xhhu-Q5-mOOEyuPZmAsJHUbBpO8Ub7xBCY'
         code_verifier = 'yGrXROHx_VazA0uovsxKfE263LMFcrSrdm4SlC-rob8'
 
@@ -54,7 +71,7 @@ class Auth0:
               '%2Fapi.openai.com%2Fv1&redirect_uri=com.openai.chat%3A%2F%2Fauth0.openai.com%2Fios%2Fcom.openai.chat' \
               '%2Fcallback&scope=openid%20email%20profile%20offline_access%20model.request%20model.read' \
               '%20organization.read%20offline&response_type=code&code_challenge={}' \
-              '&code_challenge_method=S256&prompt=login'.format(code_challenge)
+              '&code_challenge_method=S256&prompt=login&preauth_cookie={}'.format(code_challenge, preauth)
         return self.__part_three(code_verifier, url)
 
     def __part_three(self, code_verifier, url: str) -> str:
@@ -201,30 +218,11 @@ class Auth0:
             if 'access_token' not in json:
                 raise Exception('Get access token failed, maybe you need a proxy.')
 
+            if 'refresh_token' in json:
+                self.refresh_token = json['refresh_token']
+
             self.access_token = json['access_token']
             self.expires = dt.utcnow() + datetime.timedelta(seconds=json['expires_in']) - datetime.timedelta(minutes=5)
             return self.access_token
         else:
             raise Exception(resp.text)
-
-    def get_access_token_proxy(self) -> str:
-        url = '{}/api/auth/login'.format(self.api_prefix)
-        headers = {
-            'User-Agent': self.user_agent,
-        }
-        data = {
-            'username': self.email,
-            'password': self.password,
-        }
-        resp = self.session.post(url=url, headers=headers, data=data, allow_redirects=False, **self.req_kwargs)
-
-        if resp.status_code == 200:
-            json = resp.json()
-            if 'accessToken' not in json:
-                raise Exception('Get access token failed.')
-
-            self.access_token = json['accessToken']
-            self.expires = dt.strptime(json['expires'], '%Y-%m-%dT%H:%M:%S.%fZ') - datetime.timedelta(minutes=5)
-            return self.access_token
-        else:
-            raise Exception('Error get access token.')
