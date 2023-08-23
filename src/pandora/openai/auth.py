@@ -79,6 +79,7 @@ class Auth0:
             'User-Agent': self.user_agent,
             'Referer': 'https://ios.chat.openai.com/',
         }
+        print(f'url:{url}')
         resp = self.session.get(url, headers=headers, allow_redirects=True, **self.req_kwargs)
 
         if resp.status_code == 200:
@@ -89,7 +90,7 @@ class Auth0:
             except IndexError as exc:
                 raise Exception('Rate limit hit.') from exc
         else:
-            raise Exception('Error request login url.')
+            raise Exception(f'Error request login url.(ErrorCode:{resp.status_code})')
 
     def __part_four(self, code_verifier: str, state: str) -> str:
         url = 'https://auth0.openai.com/u/login/identifier?state=' + state
