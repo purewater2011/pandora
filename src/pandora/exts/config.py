@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime, timedelta
 from os import getenv
 from os.path import join
 
 from appdirs import user_config_dir
-from datetime import datetime, timedelta
 
 USER_CONFIG_DIR = getenv('USER_CONFIG_DIR', user_config_dir('Pandora-ChatGPT'))
 DATABASE_URI = getenv('DATABASE_URI',
