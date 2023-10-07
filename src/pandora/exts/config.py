@@ -11,9 +11,9 @@ DATABASE_URI = getenv('DATABASE_URI',
                       'sqlite:///{}?check_same_thread=False'.format(join(USER_CONFIG_DIR, 'pandora-chatgpt.db')))
 
 
-def default_api_prefix():
+def default_api_prefix_invalid():
     return getenv('CHATGPT_API_PREFIX', 'https://ai.fakeopen.com')
 
 
-def default_api_prefix_fakeopen():
+def default_api_prefix():
     return 'https://ai-{}.fakeopen.com'.format((datetime.now() - timedelta(days=1)).strftime('%Y%m%d'))
