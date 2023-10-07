@@ -17,3 +17,7 @@ def default_api_prefix_invalid():
 
 def default_api_prefix():
     return 'https://ai-{}.fakeopen.com'.format((datetime.now() - timedelta(days=1)).strftime('%Y%m%d'))
+
+
+def default_api_prefix_fakeopen():
+    return 'https://ai-{}.fakeopen.com'.format((datetime.now() - timedelta(days=1)).strftime('%Y%m%d'))
