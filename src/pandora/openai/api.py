@@ -132,8 +132,8 @@ class ChatGPT(API):
         return self.access_token_key_list
 
     def list_models(self, raw=False, token=None):
-        #url = '{}/api/models'.format(self.__get_api_prefix())
-        url = 'https://ai.fakeopen.com/api/models'
+        url = '{}/chatgpt/backend-api/models'.format(self.__get_api_prefix())
+        # url = 'https://ai.fakeopen.com/api/models'
         resp = self.session.get(url=url, headers=self.__get_headers(token), **self.req_kwargs)
 
         if raw:
