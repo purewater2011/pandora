@@ -226,9 +226,10 @@ class ChatGPT(API):
 
         return self.__update_conversation(conversation_id, data, raw, token)
 
-    def talk(self, prompt, model, message_id, parent_message_id, conversation_id=None, stream=True, token=None):
+    def talk(self, prompt, model, message_id, parent_message_id, conversation_id=None, stream=True, token=None, gizmo_id=None):
         data = {
             'action': 'next',
+            'conversation_mode': {'kind': 'primary_assistant'},
             'messages': [
                 {
                     'id': message_id,
@@ -248,6 +249,9 @@ class ChatGPT(API):
 
         if conversation_id:
             data['conversation_id'] = conversation_id
+
+        if gizmo_id:
+            data['conversation_mode'] = {'kind': 'gizmo_interaction', 'gizmo_id': gizmo_id}
 
         return self.__request_conversation(data, token)
     def talkv2(self, messages, model, parent_message_id, conversation_id=None, stream=True, token=None, auto_conversation=False):
