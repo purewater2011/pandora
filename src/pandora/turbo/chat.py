@@ -237,7 +237,8 @@ class TurboGPT:
 
         return resp.json()['success']
 
-    def talk(self, content, model, message_id, parent_message_id, conversation_id=None, stream=True, token=None):
+    def talk(self, content, model, message_id, parent_message_id, conversation_id=None, stream=True, token=None, gizmo_id=None):
+        print('turbo talk')
         system_prompt = None
         if conversation_id:
             conversation = self.__get_conversations(token).get(conversation_id)
