@@ -253,8 +253,6 @@ class ChatGPT(API):
         if gizmo_id:
             data['conversation_mode'] = {'kind': 'gizmo_interaction', 'gizmo_id': gizmo_id}
 
-        print(data)
-        
         return self.__request_conversation(data, token)
     def talkv2(self, messages, model, parent_message_id, conversation_id=None, stream=True, token=None, auto_conversation=False):
         new_messages = []
