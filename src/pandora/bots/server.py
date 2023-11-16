@@ -242,9 +242,10 @@ class ChatBot:
         parent_message_id = payload['parent_message_id']
         conversation_id = payload.get('conversation_id')
         stream = payload.get('stream', True)
+        gizmo_id = payload.get('gizmo_id', None)
 
         return self.__process_stream(
-            *self.chatgpt.goon(model, parent_message_id, conversation_id, stream, self.__get_token_key()), stream)
+            *self.chatgpt.goon(model, parent_message_id, conversation_id, stream, self.__get_token_key(), gizmo_id), stream)
 
     def regenerate(self):
         payload = request.json

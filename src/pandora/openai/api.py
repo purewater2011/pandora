@@ -287,13 +287,15 @@ class ChatGPT(API):
 
         return self.__request_conversation(data, token)
 
-    def goon(self, model, parent_message_id, conversation_id, stream=True, token=None):
+    def goon(self, model, parent_message_id, conversation_id, stream=True, token=None, gizmo_id=None):
         data = {
             'action': 'continue',
             'conversation_id': conversation_id,
             'model': model,
             'parent_message_id': parent_message_id,
         }
+        if gizmo_id:
+            data['conversation_mode'] = {'kind': 'gizmo_interaction', 'gizmo_id': gizmo_id}
 
         return self.__request_conversation(data, token)
 
