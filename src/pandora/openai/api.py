@@ -290,6 +290,7 @@ class ChatGPT(API):
     def goon(self, model, parent_message_id, conversation_id, stream=True, token=None, gizmo_id=None):
         data = {
             'action': 'continue',
+            'conversation_mode': {'kind': 'primary_assistant'},
             'conversation_id': conversation_id,
             'model': model,
             'parent_message_id': parent_message_id,
