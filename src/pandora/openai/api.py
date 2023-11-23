@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import asyncio
 import json
 import queue as block_queue
@@ -20,13 +21,14 @@ class API:
     def __init__(self, proxy, ca_bundle):
         self.proxy = proxy
         self.ca_bundle = ca_bundle
+        self.logger = logging.getLogger('waitress')
 
     @staticmethod
     def wrap_stream_out(generator, status):
-        print(status)
+        logging.getLogger('waitress').warning(f'status:{status}')
         if status != 200:
             for line in generator:
-                print(json.dumps(line))
+                logging.getLogger('waitress').warning(f'error-line:{json.dumps(line)}')
                 yield json.dumps(line)
 
             return
