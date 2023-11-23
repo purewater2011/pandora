@@ -27,8 +27,8 @@ class API:
     def wrap_stream_out(generator, status):
         logging.getLogger('waitress').warning(f'status:{status}')
         if status != 200:
+            logging.getLogger('waitress').warning(f'error-line:{json.dumps(generator)}')
             for line in generator:
-                logging.getLogger('waitress').warning(f'error-line:{json.dumps(line)}')
                 yield json.dumps(line)
 
             return
