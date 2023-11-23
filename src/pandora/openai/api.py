@@ -23,6 +23,7 @@ class API:
 
     @staticmethod
     def wrap_stream_out(generator, status):
+        print(status)
         if status != 200:
             for line in generator:
                 print(json.dumps(line))
