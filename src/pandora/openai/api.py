@@ -305,6 +305,7 @@ class ChatGPT(API):
     def regenerate_reply(self, prompt, model, conversation_id, message_id, parent_message_id, stream=True, token=None):
         data = {
             'action': 'variant',
+            'conversation_mode': {'kind': 'primary_assistant'},
             'messages': [
                 {
                     'id': message_id,
